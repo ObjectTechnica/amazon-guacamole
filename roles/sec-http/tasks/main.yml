@@ -1,0 +1,52 @@
+---
+# tasks file for sec-http
+- name: sec-http - Gather facts about my VPC
+  local_action:
+    module: ec2_vpc_net_facts
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Export VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: sec-http - Setting up Security Group
+  local_action:
+    module: ec2_group
+    state: present
+    name: HTTP_Allow
+    description: Allow ssh and httpd inbound
+    vpc_id: "{{ vpcdata.vpcs[0].id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: -1
+        from_port: 0
+        to_port: 0
+        cidr_ip: 0.0.0.0/0
+  register: httpd_access
+
+- name: sec-http - Tag the Security Group
+  local_action:
+    module: ec2_tag
+    resource: "{{ httpd_access.group_id }}"
+    region: "{{ aws_region }}"
+    state: present
+    tags:
+      Name: "Allow HTTP Inbound"
+      Environment: "Infrastructure"
+      Service: "HTTP"

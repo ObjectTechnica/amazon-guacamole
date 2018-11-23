@@ -1,0 +1,44 @@
+---
+# tasks file for sec-ssh
+- name: sec-ssh - Gather facts about my VPC
+  local_action:
+    module: ec2_vpc_net_facts
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Export VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: sec-ssh - New Inbound SSH Security Group
+  local_action:
+    module: ec2_group
+    state: present
+    name: SSH_Allow
+    description: Allow SSH inbound
+    vpc_id: "{{ vpcdata.vpcs[0].id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+      - proto: -1
+        from_port: 0
+        to_port: 0
+        cidr_ip: 0.0.0.0/0
+  register: security_ssh
+
+- name: sec-ssh - Tag the Security Group
+  local_action:
+    module: ec2_tag
+    resource: "{{ security_ssh.group_id }}"
+    region: "{{ aws_region }}"
+    state: present
+    tags:
+      Name: "Allow SSH inbound"
+      Environment: "Infrastructure"
+      Service: "Ingress"

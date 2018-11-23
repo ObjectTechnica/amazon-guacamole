@@ -1,0 +1,56 @@
+---
+# Tasks for fact gathering and Private subnet deployment my VPC
+- name: Network - Gather facts about my VPC
+  ec2_vpc_net_facts:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Export VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: Network - New Private subnet for Availability Zone 2A
+  ec2_vpc_subnet:
+    state: present
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    vpc_id: "{{ vpcdata.vpcs[0].id }}"
+    cidr: "{{ pri_sub_cidr_a }}"
+    az: "{{ pri_sub_az_a }}"
+    resource_tags:
+      Name: "{{ pri_sub_name_a }}"
+      Environment: "{{ vpc_name }}"
+  register: private_subnet_2a
+
+- name: Network - New Private subnet for Availability Zone 2B
+  ec2_vpc_subnet:
+    state: present
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    vpc_id: "{{ vpcdata.vpcs[0].id }}"
+    cidr: "{{ pri_sub_cidr_b }}"
+    az: "{{ pri_sub_az_b }}"
+    resource_tags:
+      Name: "{{ pri_sub_name_b }}"
+      Environment: "{{ vpc_name }}"
+  register: private_subnet_2b
+
+- name: Network - New Private subnet for Availability Zone 2C
+  ec2_vpc_subnet:
+    state: present
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    vpc_id: "{{ vpcdata.vpcs[0].id }}"
+    cidr: "{{ pri_sub_cidr_c }}"
+    az: "{{ pri_sub_az_c }}"
+    resource_tags:
+      Name: "{{ pri_sub_name_c }}"
+      Environment: "{{ vpc_name }}"
+  register: private_subnet_2c

@@ -1,0 +1,16 @@
+---
+# tasks file for vpc
+- name: VPC - Setting up a New VPC
+  ec2_vpc_net:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    name: "{{ vpc_name }}"
+    cidr_block: "{{ cidr_block }}"
+    region: "{{ aws_region }}"
+    dns_support: "{{ aws_dns_support }}"
+    tags:
+      Name: "{{ vpc_name }}"
+      Environment: Core Services
+      Services: VPC
+    tenancy: default
+  register: vpc

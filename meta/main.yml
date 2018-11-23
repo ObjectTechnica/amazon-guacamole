@@ -1,0 +1,22 @@
+galaxy_info:
+  author: Adam A. Valenzuela
+  description: Ansible on AWS
+  company: ObjectTechnica
+  license: MIT
+  min_ansible_version: 2.3 - 2.6
+  platforms:
+  - name: EL
+    versions:
+    - 6
+    - 7
+  galaxy_tags:
+   - AWS
+   - VPC
+   - ec2
+   - AutoScaling
+   - LaunchConfiguration
+   - ElasticLoadBalancers
+   - SecurityGroups
+   - S3
+   - RDS
+dependencies: []

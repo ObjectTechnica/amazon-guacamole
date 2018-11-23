@@ -1,0 +1,138 @@
+---
+# Tasks for routing-private
+- name: Routing-Private - Gather facts about my VPC
+  local_action:
+    module: ec2_vpc_net_facts
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Export VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: Gateways - Gather facts about private subnet 2a
+  ec2_vpc_subnet_facts:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ pri_sub_name_a }}"
+  register: subnet_id_a
+
+- name: Export Subnet ID for future use
+  debug:
+   var: subnet_id_a.subnets[0].id
+
+- name: Gateways - Gather facts about private subnet 2b
+  ec2_vpc_subnet_facts:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ pri_sub_name_b }}"
+  register: subnet_id_b
+
+- name: Export Subnet ID for future use
+  debug:
+   var: subnet_id_b.subnets[0].id
+
+- name: Gateways - Gather facts about private subnet 2c
+  ec2_vpc_subnet_facts:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ pri_sub_name_c }}"
+  register: subnet_id_c
+
+- name: Export Subnet ID for future use
+  debug:
+   var: subnet_id_c.subnets[0].id
+
+- name: create db subnet group
+  rds_subnet_group:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+    region: "{{ aws_region }}"
+    name: rds_subnet_group
+    description: My RDS Subnet Group
+    subnets:
+      - "{{ subnet_id_a.subnets[0].id }}"
+      - "{{ subnet_id_b.subnets[0].id }}"
+      - "{{ subnet_id_c.subnets[0].id }}"
+  register: rds_subnet_group
+
+- name: rds-sg - Setting up Security Group
+  local_action:
+    module: ec2_group
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+    name: RDS_Allow
+    description: Allow mariadb inbound
+    vpc_id: "{{ vpcdata.vpcs[0].id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: tcp
+        from_port: 3306
+        to_port: 3306
+        cidr_ip: "{{ pri_sub_cidr_a }}"
+      - proto: tcp
+        from_port: 3306
+        to_port: 3306
+        cidr_ip: "{{ pri_sub_cidr_b }}"
+      - proto: tcp
+        from_port: 3306
+        to_port: 3306
+        cidr_ip: "{{ pri_sub_cidr_c }}"
+    rules_egress:
+      - proto: -1
+        from_port: 0
+        to_port: 0
+        cidr_ip: 0.0.0.0/0
+  register: rds_access
+
+- name: sec-rds - Tag the Security Group
+  local_action:
+    module: ec2_tag
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    resource: "{{ rds_access.group_id }}"
+    region: "{{ aws_region }}"
+    state: present
+    tags:
+      Name: "Allow mariadb Inbound"
+      Environment: "Infrastructure"
+      Service: "RDS"
+
+- name: Create RDS instance
+  local_action:
+    module: rds
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    command: create
+    db_engine: "{{ db_instance_type }}"
+    engine_version: "{{ db_engine_version }}"
+    instance_name: "{{ db_instance_name }}"
+    instance_type: "{{ db_instance_size }}"
+    password: "{{ db_admin_password }}"
+    region: "{{ aws_region }}"
+    size: "{{ db_storage_volume }}"
+    subnet: rds_subnet_group
+    upgrade: yes
+    multi_zone: yes
+    maint_window: "{{ maint_window }}"
+    backup_window: "{{ backup_window }}"
+    backup_retention: "{{ backup_retention }}"
+    username: "{{ db_admin_username }}"
+    password: "{{ db_admin_password }}"
+    vpc_security_groups: "{{ rds_access.group_id }}"
+    wait: yes
+    wait_timeout: 1200
+  register: rds_result
+

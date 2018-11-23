@@ -1,0 +1,47 @@
+---
+# tasks file for asg-ssh
+- name: Gather facts about my VPC
+  local_action:
+    module: ec2_vpc_net_facts
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Export VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: Gather facts about Subnets
+  local_action:
+    module: ec2_vpc_subnet_facts
+    region: "{{ aws_region }}"
+    filters:
+      vpc-id: "{{ vpcdata.vpcs[0].id }}"
+      "tag:Name": "{{ item }}"
+  with_items:
+    - Public Subnet 2A
+    - Public Subnet 2B
+    - Public Subnet 2C
+  register: subnet_facts
+
+- set_fact:
+    subnet_ids: "{{ subnet_facts.results|map(attribute='subnets.0.id')|list }}"
+
+- name: ASG-SSH - Setting up an Auto Scaling Group
+  local_action:
+    module: ec2_asg
+    name: bastion-asg
+    launch_config_name: Bastion_lc
+    health_check_period: 600
+    health_check_type: EC2
+    replace_all_instances: yes
+    min_size: 1
+    max_size: 1
+    desired_capacity: 1
+    region: "{{ aws_region }}"
+    vpc_zone_identifier: "{{ subnet_facts.results|map(attribute='subnets.0.id')|list }}"
+    tags:
+      - Name: Bastion
+      - Environment: "{{ vpc_name }}"
+      - Service: Ingress

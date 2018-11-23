@@ -1,0 +1,41 @@
+---
+# tasks file for pre-flight
+ - name: pre-flight - Modify selinux for security
+   selinux: policy=targeted state=permissive
+
+ - name: pre-flight - Load system with needed packages for Ansible/AWS deployments
+   yum: name={{item}} state=present disable_gpg_check=yes
+   with_items:
+     #- epel-release
+     - python-pip
+     - libselinux-python
+
+ - name: pre-flight - PIP system with needed packages for Ansible/AWS Commands
+   pip: name={{item}} state=present
+   with_items:
+     - saws
+     - awscli
+     - boto
+     - botocore
+     - boto3
+
+ - name: pre-flight - Grab and source EC2.py for Dynamic Inventory
+   get_url:
+     url: https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.py
+     dest: /etc/ansible/ec2.py
+     mode: 0775
+
+ - name: pre-flight - Grab and source EC2.ini for Dynaic Inventory
+   get_url:
+     url: https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.ini
+     dest: /etc/ansible/ec2.ini
+     mode: 0775
+
+ - name: pre-flight - Move /etc/ansible/hosts to make room for ec2.py
+   command: mv /etc/ansible/hosts /etc/ansible/hosts.orig
+
+ - name: pre-flight - Move ec2.py as symlink to hosts for Dynamic Inventory
+   file: path=/etc/ansible/hosts
+         src=/etc/ansible/ec2.py
+         state=link
+         force=yes
