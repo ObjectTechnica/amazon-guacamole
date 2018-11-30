@@ -21,7 +21,7 @@ This is an AWS deployment playbook to help get you get familar deploying in AWS 
 Requirements
 ============
 
-Tasks are written to Ansibe 2.3 - Currently updating to 2.5  You will need an AWS account.  The vars file is encrypted with ansible-vault.  You will need to vault password to edit the vars file as well as running the playbook.  The "pre-flight" role will help you Configure your deployment host assuming centos/redhat/fedora (pre dnf).  I am also using a specific host to run these playbooks.  If you are running local dont forget to update the play/role
+Tasks are written to Ansibe 2.3 - Currently updating to 2.6/2.7  You will need an AWS account.  The vars file is encrypted with ansible-vault.  You will need to vault password to edit the vars file as well as running the playbook.  The "pre-flight" role will help you Configure your deployment host assuming centos/redhat/fedora (pre dnf).  I am also using a specific host to run these playbooks.  If you are running local dont forget to update the play/role
 
 ###
 ###    YUM
