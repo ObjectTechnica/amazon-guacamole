@@ -1,0 +1,114 @@
+---
+# tasks file for ec2-to-clw
+- name: ec2-to-clw - | UBUNTU | Apt-get all the things
+  apt: name={{item}} state=present
+  with_items:
+      - unzip
+      - libwww-perl
+      - libdatetime-perl
+  update_cache: yes
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: ec2-to-clw - | CENTOS | Install additional perl modules
+  yum: name={{item}} state=present
+  with_items:
+      - perl-DateTime
+      - perl-CPAN
+      - perl-Net-SSLeay
+      - perl-IO-Socket-SSL
+      - perl-Digest-SHA
+      - gcc
+      - perl-Crypt-SSLeay
+      - perl-libwww-perl
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | CENTOS | Install zip and unzip
+  yum: name={{item}} state=present
+  with_items:
+      - zip
+      - unzip
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | CENTOS | Get CPANM Module for later use
+  get_url:
+    url: http://cpanmin.us/
+    dest: /tmp/cpanm.pl
+    mode: 0750
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | CENTOS | Install cpanm so that we can use the ansible cpanm module
+  command: perl cpanm.pl App::cpanminus
+  args:
+    chdir: /tmp/
+    creates: /usr/local/bin/cpanm
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | CENTOS | Add cpanm symbolic link to /usr/bin/
+  file:
+    src: /usr/local/bin/cpanm
+    dest: /usr/bin/cpanm
+    state: link
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | CENTOS | Install CPAN Modules
+  cpanm: name={{ item }}
+  with_items:
+      - YAML
+      - IO::Socket::SSL
+      - Sys::Syslog
+      - Switch
+      - LWP::Protocol::https
+      - Bundle::LWP  
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | CENTOS | Creates directory
+  file:
+    path: /opt/emcc/
+    state: directory
+    owner: centos
+    group: centos
+    mode: 0775
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | UBUNTU | Creates directory
+  file:
+    path: /opt/emcc/
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: 0775
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: ec2-to-clw - | CENTOS | Deploy config files for CloudWatch
+  copy:
+    src: aws-scripts-mon
+    dest: /opt/emcc/
+    owner: centos
+    group: centos
+    mode: 0755
+  when: ansible_distribution == 'CentOS'
+
+- name: ec2-to-clw - | UBUNTU | Deploy config files for CloudWatch
+  copy:
+    src: aws-scripts-mon
+    dest: /opt/emcc/
+    owner: ubuntu
+    group: ubuntu
+    mode: 0755
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: ec2-to-clw - Pushing metrics to CloudWatch for later use
+  command: /opt/emcc/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-used-incl-cache-buff --swap-util --swap-used --disk-path=/dev/xvda1 --disk-space-util --disk-space-used --disk-space-avail
+
+- name: ec2-to-clw - Pulling metrics from CloudWatch for analysis
+  command: /opt/emcc/aws-scripts-mon/mon-get-instance-stats.pl
+
+- name: ec2-to-clw - Adding to cron for safe keeping
+  cron: 
+    name: mon-put-instance-data
+    minute: "*/1"
+    hour: "*"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: /opt/emcc/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-used-incl-cache-buff --swap-util --swap-used --disk-path=/dev/xvda1 --disk-space-util --disk-space-used --disk-space-avail --from-cron

@@ -1,0 +1,82 @@
+---
+# tasks New AWS Elastic Load Balancer
+- name: gathering about my VPC
+  local_action:
+    module: ec2_vpc_net_facts
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Printing the VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: gathering about public subnet 2a
+  local_action:
+    module: ec2_vpc_subnet_facts
+    region: "{{ aws_region }}"
+    filters:
+      vpc_id: "{{ vpcdata.vpcs[0].id }}"
+      "tag:Name": Public Subnet 2A
+  register: subnet_id_a
+
+- name: Printing the Subnet ID for future use
+  debug:
+   var: subnet_id_a.subnets[0].id
+
+- name: gathering about public subnet 2b
+  local_action:
+    module: ec2_vpc_subnet_facts
+    region: "{{ aws_region }}"
+    filters:
+      vpc_id: "{{ vpcdata.vpcs[0].id }}"
+      "tag:Name": Public Subnet 2B
+  register: subnet_id_b
+
+- name: Printing the Subnet ID for future use
+  debug:
+   var: subnet_id_b.subnets[0].id
+
+- name: gathering about public subnet 2c
+  local_action:
+    module: ec2_vpc_subnet_facts
+    region: "{{ aws_region }}"
+    filters:
+      vpc_id: "{{ vpcdata.vpcs[0].id }}"
+      "tag:Name": Public Subnet 2C
+  register: subnet_id_c
+
+- name: Printing the Subnet ID for future use
+  debug:
+   var: subnet_id_c.subnets[0].id
+
+- name: ELB - Creating Internet-Facing Load Balancer
+  local_action:
+    module: ec2_elb_lb
+    name: "Public-ELB"
+    state: present
+    region: "{{ aws_region }}"
+    subnets:
+      - "{{ subnet_id_a.subnets[0].id }}"
+      - "{{ subnet_id_b.subnets[0].id }}"
+      - "{{ subnet_id_c.subnets[0].id }}"
+    scheme: internet-facing
+    cross_az_load_balancing: yes
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+    security_group_names: HTTP_Allow
+    health_check:
+        ping_protocol: http
+        ping_port: 80
+        ping_path: "/index.html"
+        response_timeout: 10
+        interval: 30
+        unhealthy_threshold: 3
+        healthy_threshold: 3
+    tags:
+      Name: Public-ELB
+      Environment: Infrastructure
+      Service: Public Load Balancing

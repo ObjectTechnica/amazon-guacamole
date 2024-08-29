@@ -1,0 +1,87 @@
+---
+### vars file for Amazon-AIO
+
+#####
+# Use variables with Ansble Vault
+# To create a new encrypted data file, run the following command:
+# ansible-vault create foo.yml
+#
+# To edit an encrypted file in place, use the ansible-vault edit command. 
+# ansible-vault edit foo.yml
+#
+# If you have existing files that you wish to encrypt, use the ansible-vault encrypt command.
+# ansible-vault encrypt foo.yml bar.yml baz.yml
+#
+# If you have existing files that you no longer want to keep encrypted, you can permanently decrypt them by running the ansible-vault decrypt command.
+# ansible-vault decrypt foo.yml bar.yml baz.yml
+#
+# If you want to view the contents of an encrypted file without editing it, you can use the ansible-vault view command:
+# ansible-vault view foo.yml bar.yml baz.yml
+#####
+
+###
+# AWS Accounts and Organizations #
+###
+aws_org_name:
+aws_Acct_num:
+linked_acct_name:
+linked_email:
+linked_role_name:
+
+###
+# TASK - VPC #
+###
+aws_access_key:
+aws_secret_key:
+aws_region: us-east-1
+cidr_block: 10.10.0.0/16
+vpc_name: ansible
+aws_dns_support: yes
+
+###
+# TASK - Public Subnets #
+###
+pub_sub_cidr_a: 10.10.8.0/21
+pub_sub_az_a: us-east-1a
+pub_sub_name_a: Public_Subnet_2A
+pub_sub_cidr_b: 10.10.16.0/21
+pub_sub_az_b: us-east-1b
+pub_sub_name_b: Public_Subnet_2B
+pub_sub_cidr_c: 10.10.24.0/21
+pub_sub_az_c: us-east-1c
+pub_sub_name_c: Public_Subnet_2C
+
+###
+# TASK - Private Subnets #
+###
+pri_sub_cidr_a: 10.10.64.0/18
+pri_sub_az_a: us-east-1a
+pri_sub_name_a: Private_Subnet_2A
+pri_sub_cidr_b: 10.10.128.0/18
+pri_sub_az_b: us-east-1b
+pri_sub_name_b: Private_Subnet_2B
+pri_sub_cidr_c: 10.10.192.0/18
+pri_sub_az_c: us-east-1c
+pri_sub_name_c: Private_Subnet_2C
+
+###
+# RDS
+###
+db_instance_name: ansible
+db_instance_type: mariadb
+db_engine_version: 10.2.12
+db_storage_volume: 20
+db_instance_size: db.t2.micro
+db_avail_zone:
+db_security_groups:
+db_admin_username: admin
+db_admin_password: admin
+auto_minor_version_upgrade: yes
+maint_window: Sat:21:00-Sat:22:55
+backup_window: 01:00-01:30
+backup_retention: 7
+
+###
+# Task - ec2-to-clw #
+###
+pem_key:

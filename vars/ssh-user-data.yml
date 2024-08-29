@@ -1,0 +1,4 @@
+#!/bin/bash
+/usr/bin/yum -y update
+/usr/bin/yum-config-manager --enable epel
+/usr/bin/yum install -y tcpdump nload vim

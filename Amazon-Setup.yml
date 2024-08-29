@@ -1,0 +1,233 @@
+---
+- hosts: localhost
+  gather_facts: true
+  name: Amazon Preflight and Setup
+  become: yes
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: pre-flight, tags: pre-flight }
+
+- hosts: localhost
+  gather_facts: false
+  name: s3
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: s3, tags: s3 }
+
+- hosts: localhost
+  gather_facts: false
+  name: rds
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: rds, tags: rds }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS VPC Setup
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: vpc, tags: vpc }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup public subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: public-subnets, tags: public-subnets }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup private subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: private-subnets, tags: private-subnets }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup an Internet Gateway for public subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: igw, tags: igw }
+
+- hosts: localhost
+  gather_facts: false
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: natg, tags: natg }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup public routing for public subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: routing-public, tags: routing-public }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup routing for private subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+   - { role: routing-private-2a, tags: routing-private-2a }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup routing for private subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: routing-private-2b, tags: routing-private-2b }
+
+- hosts: localhost
+  gather_facts: false
+  name: Setup routing for private subnets
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: routing-private-2c, tags: routing-private-2c }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS VPC Security Group Setup w/ SSH Access
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: sec-ssh, tags: sec-ssh }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS VPC Security Group Setup w/ ssh and web Access
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: sec-http, tags: sec-http }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS Public Elastic Load Balancer
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: elb-public, tags: elb-public }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS Private Elastic Load Balancer
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: elb-private, tags: elb-private }
+
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS Launch Configuration for SSH Access
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: lc-ssh, tags: lc-ssh }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS Launch Configuration for HTTP Access
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: lc-http, tags: lc-http }
+
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS New Auto Scaling Group for SSH launch_config
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: asg-ssh, tags: asg-ssh }
+
+- hosts: localhost
+  gather_facts: false
+  name: New AWS Auto Scaling Group for http launch_config
+  become: no
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: asg-http, tags: asg-http }
+
+- hosts: all
+  gather_facts: yes
+  name: Deploy and configure bits for ec2 custom monitoring metrics
+  become: yes
+ #user: centos
+
+  vars_files:
+    - vars/vars.yml
+
+  roles:
+    - { role: ec2-to-clw, tags: ec2-to-clw }

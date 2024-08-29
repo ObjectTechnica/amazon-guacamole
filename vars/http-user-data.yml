@@ -1,0 +1,9 @@
+#!/bin/bash
+/usr/bin/yum -y update
+/usr/bin/yum-config-manager --enable epel
+/usr/bin/yum install -y httpd
+/bin/hostname > /var/www/html/index.html
+/bin/chmod 775 /var/www/html/index.html
+/bin/chown apache:apache /var/www/html/index.html
+/sbin/chkconfig httpd on
+/sbin/service httpd start

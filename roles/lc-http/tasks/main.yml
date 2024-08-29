@@ -1,0 +1,46 @@
+---
+# tasks file for vpc-lc-http
+- name: Gather facts about my VPC
+  local_action:
+    module: ec2_vpc_net_facts
+    region: "{{ aws_region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpcdata
+
+- name: Export VPC ID for future use
+  debug:
+   var: vpcdata.vpcs[0].id
+
+- name: Gather facts about HTTP_Allow security group
+  local_action:
+    module: ec2_group_facts
+    region: "{{ aws_region }}"
+    filters:
+      vpc-id: "{{ vpcdata.vpcs[0].id }}"
+      group-name: HTTP_Allow
+  register: group_id
+
+- name: Pull Security group by group_id
+  debug:
+   var: group_id.security_groups[0].group_id
+
+- name: Setting up a new Launch Configuration
+  local_action:
+    module: ec2_lc
+    state: present
+    name: http_lc
+    region: "{{ aws_region }}"
+    image_id: "{{ ami_image }}"
+    key_name: "{{ key_name }}"
+    security_groups: "{{ group_id.security_groups[0].group_id }}"
+    instance_type: "{{ instance_type }}"
+    volumes:
+    - device_name: /dev/xvda
+      volume_size: 30
+      device_type: gp2
+      iops: 3000
+      delete_on_termination: true
+    user_data_path: "{{ aws_lc_config_http }}"
+    assign_public_ip: no
+  register: http_launch_config
